@@ -1,0 +1,7 @@
+{
+    "openspdm_dir": "C:\\openspdm-master\\Build\\DEBUG_VS2019\\X64",
+    "openspdm_req_dir": "C:\\openspdm-master-req\\Build\\DEBUG_VS2019\\X64",
+    "cmd_openspdm_responder": "SpdmResponderEmu.exe --ver 1.0 --cap CERT,CHAL,MEAS_SIG --hash SHA_384 --meas_hash SHA_384 --asym ECDSA_P384",
+    "cmd_openspdm_requester": "SpdmRequesterEmu.exe --ver 1.0 --cap CERT,CHAL --hash SHA_384 --meas_hash SHA_384 --asym ECDSA_P384",
+    "delay_time": "130"
+}
