@@ -43,11 +43,11 @@ Modules inside package can be included in scripts, run standalone in Python cons
 
 .. code-block:: python
 
-from intel_pfr import <module-name>
+    >>>from intel_pfr import <module-name>
 
-In command propmt/terminal::
+Run in command propmt/terminal::
 
->python -m intel_pfr.<module-name> -h
+	>python -m intel_pfr.<module-name> -h
 
 Modules that have command line interface include : bmc, capsule, cpld, ifwi, sign, test_cpld, utility, verify.
 
