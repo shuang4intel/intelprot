@@ -1,5 +1,5 @@
-Pure-Python intel pfr Tool package
-==================================
+Pure-Python Intel® PFR Tool package
+===================================
 
 .. contents:: :depth: 1
 
@@ -7,13 +7,15 @@ Pure-Python intel pfr Tool package
 Description
 -----------
 
-intel_pfr is a Pure Python tool package for Intel PFR projects development. 
-It includes scripts for capsule generation, singing, image build, analysis, and validation, etc.
+intel_pfr is a Pure Python tool package for Intel PFR projects development.
+It includes scripts for Intel PFR compliant firmare, capsule generation, singing, and PFR image analysis, validation, etc.
 
 Intel® Platform Firmware Resilience (Intel® PFR) is a hardware-based cybersecurity solution for platform
-firmware resilience. This Python package is released to assist Intel PFR project in Whitley, Idaville, Eaglestream plaforms.
+firmware resilience. This Python package is released to assist Intel PFR project in Whitley, Idaville and Eaglestream plaforms.
 
-Refer 'Intel PFR Max10 FPGA source code release <https://github.com/intel/platform-firmware-resiliency>'_
+Intel PFR Max10 FPGA source code is `released in GitHub`_.
+
+.. _released in GitHub: https://github.com/intel/platform-firmware-resiliency>
 
 
 Installing
@@ -27,7 +29,7 @@ Installing
 Requirements
 ------------
 
-Dependencies modules::
+Dependencies modules:
 
 #. python-ecsda: pip install ecsda
 #. crccheck: pip install crccheck
@@ -37,7 +39,7 @@ Dependencies modules::
 Usage
 -----
 
-Use modules in scripts or run in Python console::
+Modules inside package can be included in scripts, run standalone in Python console or command lines.
 
 .. code-block:: python
 
@@ -47,7 +49,7 @@ In command propmt/terminal::
 
 >python -m intel_pfr.<module-name> -h
 
-Modules that have command line interface include : bmc, capsule, cpld, ifwi, sign, test_cpld, utility, verify. 
+Modules that have command line interface include : bmc, capsule, cpld, ifwi, sign, test_cpld, utility, verify.
 
 
 Documentation
