@@ -207,7 +207,7 @@ class PFR_BMC(object):
     if offset == None:
       offset = _CPLD_RECOVERY
     if frcv == None:
-      frcv = os.path.splitext(self._fname)[0]+"_cpld_rcvy.bin"
+      frcv = os.path.splitext(self.fname)[0]+"_cpld_rcvy.bin"
     shutil.copy(self.fname, frcv)
     with open(fcap, 'rb') as f1:
       outb = f1.read()
@@ -257,6 +257,9 @@ class PFR_BMC(object):
   def get_oem(self):
     """ return capsule OEM bytes in hex string """
     return self.oem.hex()
+
+
+
 
 
 class Redfish_Update(object):
@@ -394,9 +397,13 @@ class pfr_bmc_image(object):
     for k in ['csk_id', 'build_major', 'build_minor', 'build_num', 'svn', 'bkc_version']:
       self.dict_build_image[k] = int(self.dict_build_image[k], 16)
 
+    self.pfr_bmc_image_size = 0
     for d in self.dict_spi_parts:
       d['offset'] = int(d['offset'], 16)
       d['size'] = int(d['size'], 16)
+      if d['offset'] > self.pfr_bmc_image_size:
+        self.pfr_bmc_image_size = d['offset'] + d['size']
+    #print('self.pfr_bmc_image_size = 0x{:08x}'.format(self.pfr_bmc_image_size))
 
     for d in self.dict_i2c_rules:
       d['address'] = int(d['address'], 16)
@@ -413,8 +420,11 @@ class pfr_bmc_image(object):
 
     self.platform_name = self.manifest['build_image']['platform_name']
     self.firmware_file = self.manifest['build_image']['mtd_firmware']
-    self.csk_prv = self.manifest['build_image']['csk_private_key']
-    self.rk_prv  = self.manifest['build_image']['root_private_key']
+    #self.csk_prv = self.manifest['build_image']['csk_private_key']
+    #self.rk_prv  = self.manifest['build_image']['root_private_key']
+    self.csk_prv = os.path.join(os.path.dirname(manifest), self.manifest['build_image']['csk_private_key'])
+    self.rk_prv  = os.path.join(os.path.dirname(manifest), self.manifest['build_image']['root_private_key'])
+
     self.pfr_ver = 3 if keys.get_curve(self.csk_prv) == 'NIST384p' else 2
 
     self.page_size = PAGE_SIZE
@@ -426,8 +436,8 @@ class pfr_bmc_image(object):
       self.hash_func = hashlib.sha384    # for PFR 3.0, use sha384 algorithm
 
     # hash, erase and compression bit maps for 128MB
-    self.pbc_erase_bitmap = bytearray(PAGE_SIZE) # PAGE_SIZE (128M)/(4K*8)
-    self.pbc_comp_bitmap  = bytearray(PAGE_SIZE) # PAGE_SIZE (128M)/(4K*8)
+    self.pbc_erase_bitmap = bytearray(int(self.pfr_bmc_image_size/(PAGE_SIZE*8))) # (FlashSize)/(4K*8)
+    self.pbc_comp_bitmap  = bytearray(int(self.pfr_bmc_image_size/(PAGE_SIZE*8))) # (FlashSize)/(4K*8)
     self.pbc_comp_payload = 0
 
   def build_pfm(self):
@@ -544,10 +554,10 @@ class pfr_bmc_image(object):
       # pbc header
       pbc_tag = struct.pack('<I', 0x5f504243)
       pbc_ver = struct.pack('<I', 0x2)
-      page_size = struct.pack('<I', 0x1000)
+      page_size = struct.pack('<I', 0x1000)  # page size 4*1024 = 0x1000
       patt_size = struct.pack('<I', 0x1)
       patt_comp = struct.pack('<I', 0xFF)
-      bmap_size = struct.pack('<I', 0x8000)
+      bmap_size = struct.pack('<I', int(self.pfr_bmc_image_size/PAGE_SIZE)) # 4k granularity, 0x8000 is 128MB, 0x10000 is for 256MB
       pload_len = struct.pack('<I', self.pbc_comp_payload)
       rsvd0     = b'\x00'*100
       erase_bitmap = bytes(self.pbc_erase_bitmap)
@@ -591,7 +601,7 @@ class pfr_bmc_image(object):
       fd4.write(fd3.read())
 
     print("-- sign update capsule")
-    scap = sign.Signing("{}-bmc_unsigned_cap.bin".format(self.platform_name), _PCTYPE_BMC_PFM,  self.dict_build_image['csk_id'], self.rk_prv, self.csk_prv)
+    scap = sign.Signing("{}-bmc_unsigned_cap.bin".format(self.platform_name), _PCTYPE_BMC_CAP,  self.dict_build_image['csk_id'], self.rk_prv, self.csk_prv)
     scap.set_signed_image("%s-bmc_signed_cap.bin"%(self.platform_name))
     scap.sign()
 
@@ -619,12 +629,115 @@ class pfr_bmc_image(object):
     lst_del_file = ["{}-image-pfm_signed.bin".format(self.platform_name)]
     for f in lst_temp_file:
       src_file = "%s-%s"%(self.platform_name, f)
-      shutil.move(src_file, 'Temp\%s'%src_file)
+      dst_file = os.path.join(os.getcwd(), 'Temp', src_file)
+      shutil.move(src_file, dst_file)
     for f in lst_out_file:
       src_file = "%s-%s"%(self.platform_name, f)
-      shutil.move(src_file, "Output\%s"%src_file)
+      dst_file = os.path.join(os.getcwd(), 'Output', src_file)
+      shutil.move(src_file, dst_file)
     for f in lst_del_file:
       os.remove(f)
+
+
+  def build_update_capsule_with_afm(self, afm_active, afm_recovery):
+    """ build signed update capsule with AFM active and afm recovery
+        output capsule is named as {pfr_bmc_image}_capsule_afm.bin
+
+    :param afm_active: AFM active capsule
+    :param afm_recovery: AFM recovery capsule
+
+    """
+    self.updatecap_afm = '{}_bmc_update_capsule_afm.bin'.format(self.platform_name)
+    for d in self.dict_spi_parts:
+      if d['name']=='pfm':
+        idx = d['index']
+        pfm_st = d['offset']
+        pfm_end= d['offset'] + d['size']
+      if d['name']=='rc-image':
+        idx = d['index']
+        rcimg_st = d['offset']
+        rcimg_end= d['offset'] + d['size']
+      if d['name']== 'afm-active':
+        self.afm_active_st = d['offset']
+        self.afm_active_end =d['offset'] + d['size']
+      if d['name']== 'afm-recovery':
+        self.afm_recovery_st = d['offset']
+        self.afm_recovery_end = d['offset'] + d['size']
+
+    self.pfr_pfm_offset = pfm_st
+    self.pfr_capsule_offset = rcimg_st
+    exclude_pages =[[pfm_st//PAGE_SIZE, (pfm_end-PAGE_SIZE)//PAGE_SIZE],[rcimg_st//PAGE_SIZE, (rcimg_end-PAGE_SIZE)//PAGE_SIZE]]
+    comp_payload = b''   # compression payload
+
+    self.build_pfm()
+    spfm = sign.Signing("{}-pfm.bin".format(self.platform_name), _PCTYPE_BMC_PFM, self.dict_build_image['csk_id'], self.rk_prv, self.csk_prv)
+    spfm.set_signed_image("%s-pfm_signed.bin"%(self.platform_name))
+    spfm.sign()
+
+    with open("%s-pfm_signed.bin"%(self.platform_name), 'rb') as f:
+      self.signed_pfm_bdata = f.read()
+
+
+    with open("%s-bmc_compressed_afm.bin" % self.platform_name, "wb+") as upd:
+      with open(self.firmware_file, "rb") as f:
+        # process all spi image parts
+        for p in self.dict_spi_parts:
+          image_name = p['name']
+          start_addr = p['offset']
+          size = p['size']
+          pfm_prot_mask = p['prot_mask']  # pfm protection mask
+          pfm_flag = p['pfm']             # pfm needed?
+          hash_flag = p['hash']           # to be hashed?
+          compress = p['compress']        # compress flag
+          index = p['index']              # image part index
+          # 1 page is 4KB, page number of address 0x80000 is 0x80
+          page = start_addr >> 12         # one page is 0x1000, page number is address right-shift 12 bits
+
+          #print("--page: {}, start_addr = 0x{:x}, p = {}".format(page, start_addr, p))
+          f.seek(start_addr)
+          skip = False
+
+          for chunk in iter(lambda: f.read(self.page_size), b''):
+            chunk_len = len(chunk)
+            if chunk_len != self.page_size:
+              chunk = b''.join([chunk, b'\xff' * (self.page_size - chunk_len)])
+
+            for p in exclude_pages:
+              if (page >= p[0]) and (page <= p[1]):
+                skip = True
+                break
+
+            if (not skip) and (compress == 1):
+              self.pbc_erase_bitmap[page >> 3] |= 1 << (7- (page % 8)) # Big endian bit map
+              # add to the pbc map
+              if chunk != self.empty:
+                upd.write(chunk)  # write to file
+                self.pbc_comp_bitmap[page >> 3] |= 1 << (7- (page % 8)) # Big Endian bit map
+                self.pbc_comp_payload += chunk_len # compressed payload length in bytes
+            page += 1
+            if (page * self.page_size) >= (size + start_addr):
+              break
+
+      # pbc header
+      pbc_tag = struct.pack('<I', 0x5f504243)
+      pbc_ver = struct.pack('<I', 0x2)
+      page_size = struct.pack('<I', PAGE_SIZE)  # page size 4*1024 = 0x1000
+      patt_size = struct.pack('<I', 0x1)
+      patt_comp = struct.pack('<I', 0xFF)
+      bmap_size = struct.pack('<I', self.pfr_bmc_image_size/PAGE_SIZE) # 4k granularity, 0x8000 is 128MB, 0x10000 is for 256MB
+      pload_len = struct.pack('<I', self.pbc_comp_payload)
+      rsvd0     = b'\x00'*100
+      erase_bitmap = bytes(self.pbc_erase_bitmap)
+      comp_bitmap  = bytes(self.pbc_comp_bitmap)
+      self.pbc_header = pbc_tag + pbc_ver + page_size + patt_size + \
+                      patt_comp + bmap_size + pload_len + rsvd0 + erase_bitmap + comp_bitmap
+
+
+      # write file and sign update capsule
+      upd.write(self.signed_pfm_bdata)
+      upd.write(self.pbc_header)
+
+
 
 # reference design namme and pfr bmc manifest file
 _DICT_REF_MANIFEST = {
