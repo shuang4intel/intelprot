@@ -227,6 +227,12 @@ class IFWI(object):
       fd1.seek(start_addr)
       fd1.write(fd2.read())
 
+  def get_rcv_capsule(self):
+    self.rcv_cap = os.path.splitext(self.ifwi_image)[0]+"_rcv_cap.bin"
+    with open(self.ifwi_image, 'rb') as f1, open(self.rcv_cap, 'wb') as f2:
+      f1.seek(int(self.pfrs['pch_recovery'],0))
+      f2.write(f1.read(RECV_CAP_SIZE))
+
   def show(self):
     msg  = '\n-- IFWI provision:\n active: {}, recovery: {}, staging: {}'.format(self.pfrs['pch_active'], self.pfrs['pch_recovery'],self.pfrs['pch_staging'])
     msg += '\n-- BMC provision:\n active: {}, recovery: {}, staging: {}'.format(self.pfrs['bmc_active'], self.pfrs['bmc_recovery'],self.pfrs['bmc_staging'])

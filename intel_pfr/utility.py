@@ -164,7 +164,7 @@ def bin_hexdump(fbin, st_addr=None, end_addr=None, fout=None):
     f1.seek(st_addr)
     for bdata in iter(partial(f1.read, 16), b''):
        f2.write("0x%07X | "%addr)
-       for i in range(16):
+       for i in range(len(bdata)):
          f2.write(" %02x"%bdata[i])
        f2.write("\n")
        addr += 16

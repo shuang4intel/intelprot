@@ -46,17 +46,18 @@ from __future__ import division
 import os, struct, json, sys, shutil, getopt, argparse
 import logging
 logger = logging.getLogger(__name__)
-from intel_pfr import sign, keys
+from intel_pfr import sign, keys, utility, pfm, bmc, ifwi
 
 _BMC_ACT_PFM   = 0x0080000
 _BMC_STAGING   = 0x4A00000
-_BMC_RCV_START = 0x2a00000
+_BMC_RCV_START = 0x2A00000
 _PCH_STAGING   = 0x6A00000
 _CPLD_STAGING  = 0x7A00000
 _CPLD_RECOVERY = 0x7F00000
 PAGE_SIZE      = 0x1000
-
+BLOCK_SIGN_SIZE= 0x400
 DECOMM_PCTYPE  = 0x200
+BLK0_MAGIC_TAG = 0xB6EAFD19
 
 AFM_CAP_SIZE   = 128*1024  # 128KB total size
 AFM_ALIGN_SIZE = 4*1024    # 4KB aligned for each device AFM
@@ -461,6 +462,216 @@ class AFM(object):
     os.remove(self.afm_image_presign)
     for i in self.lst_signed_afm_dev:
       os.remove(i)
+
+
+PBC_STRUCT_KEY = ('pbc_tag', 'pbc_ver', 'page_size', 'pattern_size', 'pattern', 'bmap_size', \
+'payload_len', 'pbc_rsvd', 'active_bmap', 'compress_bmap')
+PBC_TAG = 0x5F504243
+PFM_TAG = 0x02B3CE1D
+PAGE_SIZE = 0x1000
+
+class BMC_Capsule(object):
+  """ class for BMC update capsule operations, including::
+
+    * checking PFM inside capsule
+    * decompression capsule to recover it as a BMC pfr image, based on the manifest JSON file
+
+   In the decompressed image, the recovery capsule is included, staging area is empty
+   The signed pfm in the capsule is used.
+
+  :param cap_image: BMC update capsule image file, either unsigned or signed capsule. Signed capsule will be added in flash recovery area.
+  :param manifest_json: file name of the manifest jason file used to build pfr bmc image and the capsule.
+                        It is required to follow the format.
+
+  """
+  def __init__(self, cap_image, manifest_json):
+    self.cap_image = cap_image
+    with open(manifest_json, 'r') as f:
+      self.manifest=json.load(f)
+
+    self.csk_prv = os.path.join(os.path.dirname(manifest_json), self.manifest['build_image']['csk_private_key'])
+    self.rk_prv  = os.path.join(os.path.dirname(manifest_json), self.manifest['build_image']['root_private_key'])
+    self.dict_spi_parts = self.manifest['image-parts']
+    self.pfr_bmc_image_size = 0
+    for d in self.dict_spi_parts:
+      d['offset'] = int(d['offset'], 16)
+      d['size'] = int(d['size'], 16)
+      if d['name'] == 'pfm':
+        self.pfm_offset = d['offset']
+        self.pfm_size = d['size']
+      if d['name'] == 'rc-image':
+        self.rcv_offset = d['offset']
+        self.rcv_size = d['size']
+      if d['offset'] > self.pfr_bmc_image_size:
+        self.pfr_bmc_image_size = d['offset'] + d['size']
+
+    self.out_image = os.path.join(os.path.dirname(self.cap_image), os.path.splitext(cap_image)[0]+'_decomp.bin')
+    self.deComp_dict = pfm.ConfigDict()
+    self.pbc_st_addr = int(utility.bin_search_tag(self.cap_image, PBC_TAG)[0], 0)
+    self.pfm_st_addr = int(utility.bin_search_tag(self.cap_image, pfm.PFM_MAGIC)[0], 0)
+    self.cap_pfm = pfm.PFM(self.cap_image)
+    self.pfm_len = self.cap_pfm.pfm_dict['length']
+    if self.pfm_st_addr < BLOCK_SIGN_SIZE:
+      logger.error("Error: pfm_st_addr should be bigger than 0x400")
+
+    with open(self.cap_image, 'rb') as f:
+      lst_temp = struct.unpack('<III', f.read(12))
+      blk0_tag, blk0_pctype = lst_temp[0], lst_temp[2]
+      if (blk0_tag == BLK0_MAGIC_TAG) and (blk0_pctype == bmc._PCTYPE_BMC_PFM) and (self.pfm_st_addr == BLOCK_SIGN_SIZE):
+        self.if_signed_cap = False
+      if (blk0_tag == BLK0_MAGIC_TAG) and (blk0_pctype == bmc._PCTYPE_BMC_CAP) and (self.pfm_st_addr == 2*BLOCK_SIGN_SIZE):
+        self.if_signed_cap = True
+
+      f.seek(self.pfm_st_addr - BLOCK_SIGN_SIZE)  # seek to blocksign start offset
+      self.signed_pfm_bdata = f.read(BLOCK_SIGN_SIZE + self.pfm_len) # read signed pfm in capsule
+
+    N = int(self.pfr_bmc_image_size/(PAGE_SIZE*8))
+    PBC_STRUCT_FMT = "<IIIIIII100s{}s{}s".format(N, N)
+    self.pbc_head_size = struct.calcsize(PBC_STRUCT_FMT)
+    with open(self.cap_image, 'rb') as f:
+      f.seek(self.pbc_st_addr)
+      lst_temp = struct.unpack(PBC_STRUCT_FMT, f.read(self.pbc_head_size))
+
+    for (k, v) in zip(PBC_STRUCT_KEY, lst_temp):
+      self.deComp_dict[k] = v
+
+    self.payload_len = self.deComp_dict['payload_len']
+    self.erase_bmap  = self.deComp_dict['active_bmap']
+    self.copy_bmap   = self.deComp_dict['compress_bmap']
+    self.payload_staddr= self.pbc_st_addr + self.pbc_head_size
+
+
+  def show(self):
+    """display deComp_dict """
+    for k in self.deComp_dict:
+      if isinstance(self.deComp_dict[k], int):
+        print(k, ' = ', hex(self.deComp_dict[k]))
+      #if isinstance(self.deComp_dict[k], (bytes, bytearray)):
+      #  print(k, ' = ', self.deComp_dict[k].hex())
+    logger.info(hex(self.pfm_offset), hex(self.rcv_offset))
+
+
+  def decompression(self):
+    """ get decompressed image """
+    with open(self.cap_image, 'rb') as f:
+      f.seek(self.payload_staddr)
+      self.payload_bdata = f.read(self.payload_len)
+
+    # copy data to output image based on erase and copy bitmap
+    start_addr, end_addr = 0, self.pfr_bmc_image_size
+    end_page = end_addr >> 12
+    page = 0
+    with open(self.out_image, 'wb+') as fout:
+      addr = 0
+      copy_idx = 0
+      while (addr <= (end_addr-0x1000)):
+        page = addr >> 12
+        page_copy = (self.copy_bmap[page >> 3] & (1 << ( 7 - page%8))) >> (( 7 - page%8))
+        #if page < 130:
+        #  print('page = %i, copy_bmap = 0x%02x, bmapByte=%i, page_copy=%i'%(page, self.copy_bmap[page >> 3], page>>3, page_copy))
+        if page_copy == 1:
+          fout.write(self.payload_bdata[copy_idx*0x1000:(copy_idx+1)*0x1000])
+          copy_idx += 1
+        else:
+          fout.write(b'\xff'*PAGE_SIZE)
+        addr += PAGE_SIZE
+    print('copy_idx = 0x%08x'%copy_idx)
+    # add PFM
+    with open(self.out_image, 'r+b') as fout:
+      fout.seek(self.pfm_offset)
+      fout.write(self.signed_pfm_bdata)
+    # add signed recovery capsule
+    if not self.if_signed_cap:
+      scap = sign.Signing(self.cap_image, bmc._PCTYPE_BMC_CAP,  int(self.manifest['build_image']['csk_id'], 0), self.rk_prv, self.csk_prv)
+      scap.set_signed_image("temp_bmc_signed_cap.bin")
+      scap.sign()
+      add_rcv_cap = 'temp_bmc_signed_cap.bin'
+    if self.if_signed_cap:
+      add_rcv_cap = self.cap_image
+    with open(self.out_image, 'r+b') as fout, open(add_rcv_cap, 'rb') as f:
+      fout.seek(self.rcv_offset)
+      fout.write(f.read())
+
+
+class IFWI_Capsule():
+  """ class for IFWI capsule operation including capsule decompression
+
+  """
+  def __init__(self, cap_image):
+    self.cap_image = cap_image
+    self.out_image = os.path.join(os.path.dirname(self.cap_image), os.path.splitext(cap_image)[0]+'_decomp.bin')
+    self.deComp_dict = pfm.ConfigDict()
+    self.pfm_st_addr = int(utility.bin_search_tag(self.cap_image, PFM_TAG)[0], 0)
+    self.pbc_st_addr = int(utility.bin_search_tag(self.cap_image, PBC_TAG)[0], 0)
+
+    self.pfr_ifwi_image_size = 64*1024*1024
+    N = int(self.pfr_ifwi_image_size/(PAGE_SIZE*8))
+    PBC_STRUCT_FMT = "<IIIIIII100s{}s{}s".format(N, N)
+    self.pbc_head_size = struct.calcsize(PBC_STRUCT_FMT)
+    with open(self.cap_image, 'rb') as f:
+      f.seek(self.pbc_st_addr)
+      lst_temp = struct.unpack(PBC_STRUCT_FMT, f.read(self.pbc_head_size))
+
+    for (k, v) in zip(PBC_STRUCT_KEY, lst_temp):
+      self.deComp_dict[k] = v
+
+    self.payload_len = self.deComp_dict['payload_len']
+    self.erase_bmap  = self.deComp_dict['active_bmap']
+    self.copy_bmap   = self.deComp_dict['compress_bmap']
+    self.payload_staddr= self.pbc_st_addr + self.pbc_head_size
+    self.prov = ifwi.Agent(self.cap_image)
+    self.prov.get_pfrs_value()
+    self.pfm_offset = int(self.prov._pfrs['pch_active'], 0)
+    self.rcv_offset = int(self.prov._pfrs['pch_recovery'], 0)
+
+  def decompression(self):
+    """ get decompressed image
+    """
+    with open(self.cap_image, 'rb') as f:
+      f.seek(self.payload_staddr)
+      self.payload_bdata = f.read()
+    #print('payload_bdata size:', len(self.payload_bdata))
+    # copy data to output image based on erase and copy bitmap
+    start_addr, end_addr = 0, self.pfr_ifwi_image_size
+    end_page = end_addr >> 12 # one page is 4KB (0x4000), shift 12 bit
+    page = 0
+    with open(self.out_image, 'wb+') as fout:
+      addr = 0
+      copy_idx = 0
+      while (addr <= (end_addr-PAGE_SIZE)):
+        page = addr >> 12
+        page_copy = (self.copy_bmap[page >> 3] & (1 << ( 7 - page%8))) >> (( 7 - page%8))
+        #if page < 130:
+        #  print('page = %i, copy_bmap = 0x%02x, bmapByte=%i, page_copy=%i'%(page, self.copy_bmap[page >> 3], page>>3, page_copy))
+        if page_copy == 1:
+          fout.write(self.payload_bdata[copy_idx*PAGE_SIZE:(copy_idx+1)*PAGE_SIZE])
+          copy_idx += 1
+        else:
+          fout.write(b'\xff'*PAGE_SIZE)
+        addr += PAGE_SIZE
+    print('copy_idx = 0x%08x'%copy_idx)
+    # add PFM area and recovery area
+    with open(self.out_image, 'r+b') as f1, open(self.cap_image, 'rb') as f2:
+      f2.seek(self.pfm_st_addr - BLOCK_SIGN_SIZE)
+      self.signed_pfm_bdata = f2.read(self.pbc_st_addr - (self.pfm_st_addr - BLOCK_SIGN_SIZE))
+      f1.seek(self.pfm_offset)
+      f1.write(self.signed_pfm_bdata)
+      # add cap_image to recovery capsule area
+      f1.seek(self.rcv_offset)
+      f2.seek(0)
+      f1.write(f2.read())
+
+  def show_pfm(self):
+    """ display PFM inside the capsule """
+    pfmobj = pfm.PFM(self.cap_image)
+    pfmobj.show()
+
+  def show(self):
+    """ show capsule information """
+    logger.info('-- capsule image :{}'.format(self.cap_image))
+    logger.info('-- PFM offset : 0x{:08x}'.format(self.pfm_offset))
+    logger.info('-- RCV offset : 0x{:08x}'.format(self.rcv_offset))
+    self.show_pfm()
 
 
 def main(args):

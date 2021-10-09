@@ -9,8 +9,8 @@
    Then use both RK and CSK private keys to sign it.
 
    Sign CPLD recovery/staging capsule
-	 ==================================
-   
+   ==================================
+
 
    Sign in python console and script
    ---------------------------------
@@ -36,10 +36,31 @@
 
 
 """
-import os, sys, shutil, argparse, pathlib
-from intel_pfr import sign
+import os, sys, shutil, struct, argparse, pathlib
+from collections import OrderedDict
+from intel_pfr import sign, utility
 
 _CPLD_CAP_PCTYPE  = 0   # pc_type for CPLD update capsule
+
+BLK0_FMT = '<IIII32s48s32s'
+BLK0_KEY = ['b0_tag', 'pc_len', 'pc_type', 'b0_rsvd1', 'hash256', 'hash384', 'b0_rsvd2']
+BLK1_FMT = 'I12sIIII48s48s20sIIII48s48s20sI48s48sII48s48s'
+BLK1_KEY_B1R   = ['b1_tag', 'b1_rsvd1', 'b1r_tag', 'b1r_curve', 'b1r_permission', 'b1r_keyid', 'b1r_pubX', 'b1r_pubY', 'b1r_rsvd2']
+BLK1_KEY_B1CSK = ['b1csk_tag', 'b1csk_curve', 'b1csk_permission', 'b1csk_keyid', 'b1csk_pubX', 'b1csk_pubY', 'b1csk_rsvd1', 'b1csk_sig_magic', 'b1csk_sigR', 'b1csk_sigS']
+BLK1_KEY_B1B0  = ['b1b0_tag', 'b1b0_sig_magic', 'b1b0_sigR', 'b1b0_sigS']
+
+BLK1_KEY = BLK1_KEY_B1R + BLK1_KEY_B1CSK + BLK1_KEY_B1B0
+
+BLK_SIGN_FMT = BLK0_FMT + BLK1_FMT
+BLK_SIGN_KEY = BLK0_KEY + BLK1_KEY
+
+# for nested dictionary
+class ConfigDict(OrderedDict):
+  """ define an ordered dictionary """
+  def __missing__(self, key):
+    val = self[key] = ConfigDict()
+    return val
+
 
 class CPLD(object):
   """ class for cpld image operation
@@ -62,6 +83,43 @@ class CPLD(object):
   def sign_capsule(self):
     mycpld = sign.Signing(self.unsigned_cap, _CPLD_CAP_PCTYPE, self.csk_id, self.rk_prv, self.csk_prv)
     mycpld.sign()
+
+
+class UpdateCapsule(object):
+  """
+  class for process of signed update capsule
+  """
+  def __init__(self, signed_image):
+    self.signed_image= signed_image
+    self.cap_dict = ConfigDict()
+    self.unsigned_cap = 'unsigned_cap.bin'
+
+  def get_unsigned_cap(self, out_image=None):
+    """ process a signed image
+    """
+    with open(self.signed_image, 'rb') as f:
+      blk_data=f.read(1024)
+    s = struct.calcsize(BLK_SIGN_FMT)
+    lst_temp = struct.unpack(BLK_SIGN_FMT, blk_data[0:s])
+    for (k, v) in zip(BLK_SIGN_KEY, lst_temp):
+      self.cap_dict[k] = v
+    """
+    for k in BLK_SIGN_KEY:
+      print(k, '=')
+      if isinstance(self.cap_dict[k], int):
+        print(hex(self.cap_dict[k]))
+      else:
+        print(self.cap_dict[k].hex())
+    """
+    pc_len = self.cap_dict['pc_len']
+    with open(self.signed_image, 'rb') as f, open(self.unsigned_cap, 'wb') as f1:
+      f.seek(1024)
+      pc_content = f.read(pc_len)
+      hash256 = utility.get_hash256(pc_content)
+      hash384 = utility.get_hash384(pc_content)
+      if (bytes.fromhex(hash256) == self.cap_dict['hash256']) and \
+      (bytes.fromhex(hash384) == self.cap_dict['hash384']):
+        f1.write(pc_content)
 
 
 def main(args):

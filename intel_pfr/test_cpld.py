@@ -9,8 +9,8 @@
   This module is used to test CPLD as SPDM-requester and responder
 
   Run SPDM Test
-	=============
- 
+  =============
+
   Execution in command prompt::
 
     >python -m intel_pfr.test_cpld -get_setup   # get openspdm_execution.json file in work folder
@@ -22,13 +22,14 @@
   About OPENSPDM
   ==============
 
-  OPENSPDM is open source project emulating SPDM devices. Refer 611974 device attestation chapter for preparation. 
-	Refer OPENSPDM GitHub link  `openspdm <https://github.com/jyao1/openspdm>`_. for detail.
+  OPENSPDM is open source project emulating SPDM devices. Refer 611974 device attestation chapter for preparation.
+  Refer OPENSPDM GitHub link  `openspdm <https://github.com/jyao1/openspdm>`_. for detail.
 
 """
 # this is to test CPLD using openspdm-responnder
 import socket, sys, time, os, argparse, shutil
 import subprocess, json
+from datetime import datetime
 
 import logging
 logger = logging.getLogger(__name__)
@@ -84,8 +85,9 @@ transmit_head = [i+transportType for i in transmit_cmd]
 
 STOP_TRANSMIT   = b'\x00\x00\xff\xfe' + b'\x00\x00\x00\x01' + b'\x00\x00\x00\x00'
 
-STOP_COUNT = 2  # this only apply to CPLD test.
+STOP_COUNT = 2  # this only apply to CPLD as requester test.
 
+LAST_MEASRECORD = '0101430084400005050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505'
 def config_log(logfile):
   """ config log file include a Filehandler and a Streamhandler
 
@@ -136,7 +138,8 @@ class Run_SPDM_Test(object):
     self.req = requester.lower()
     self.res = responder.lower()
 
-    self.logfile = 'run_spdm_req-{a}-res-{b}.log'.format(a=requester, b=responder)
+    logfile = 'runspdm_{a}-req_{b}-res'.format(a=requester, b=responder)
+    self.logfile = datetime.now().strftime('{}_%Y-%m-%d_%H-%M.log'.format(logfile))
     config_log(self.logfile)
 
     self.get_version_count = 0  # stop if GET_VERSION repeat two times
@@ -185,8 +188,24 @@ class Run_SPDM_Test(object):
     #print(dict_spdm_responder)
     #spdm_responder = spdm.SPDM_RESPONDER(dict_spdm_responder)
     #spdm_responder.show()
+    #self.verify_test()
     self.close_test()
 
+  def verify_test(self):
+    """ verify test
+    """
+    #print(dict_spdm_requester)
+    #spdm_req = spdm.SPDM_REQUESTER(self.dict_spdm_requester)
+    #spdm_req.set_responder_pubkey(r'C:\openspdm-master\Build\DEBUG_VS2019\X64\EcP384\end_responder_pubkey.pem')
+    #spdm_req.verify_M2()
+    #spdm_req.set_responder_pubkey(r'C:\openspdm-master\Build\DEBUG_VS2019\X64\EcP384\cpld_pubkey.pem')
+    #spdm_req.verify_L2()
+    #spdm_req.show()
+
+    #print(dict_spdm_responder)
+    #spdm_res = spdm.SPDM_RESPONDER(dict_spdm_responder)
+    #spdm_res.show()
+    #ipmitool -I lanplus -H 10.105.134.31 -C 17 -U debuguser -P 0penBmc1 raw 6 0x52 0x09 0x70 0x30 0x20
 
   def run_requester(self):
     """ run spdm requester """
@@ -301,9 +320,9 @@ class Run_SPDM_Test(object):
         if not datachunk_q:
           break # no more data coming in, so break out of the while loop
         self.sock_res.sendall(datachunk_q)
-        logger.info("-- REQ-->RES datachunk: {}".format(datachunk_q))
+        #logger.info("-- REQ-->RES datachunk: {}".format(datachunk_q))
         self.raw_mctp_req.extend(datachunk_q)  # track single mctp message
-        logger.info("**** raw_mctp_req.tobytes(): {}".format(self.raw_mctp_req.tobytes()))
+        #logger.info("**** raw_mctp_req.tobytes(): {}".format(self.raw_mctp_req.tobytes()))
         if any(item in datachunk_q for item in lst_req_msg):
           break
 
@@ -379,7 +398,7 @@ class Run_SPDM_Test(object):
           break  # no more data coming in, so break out of the while loop
 
         self.req_conn.sendall(datachunk_s)
-        logger.info("-- RES-->REQ datachunk: {}".format(datachunk_s))
+        #logger.info("-- RES-->REQ datachunk: {}".format(datachunk_s))
         self.raw_mctp_res.extend(datachunk_s)  # add chunk to your already collected data
         # check spdm message code switch to req
         if any(item in datachunk_s for item in lst_res_msg):
@@ -467,13 +486,16 @@ class Run_SPDM_Test(object):
 
 
   def process_mctp_responder(self):
-    """ process responder MCTP packet"""
+    """ process responder MCTP packet
+
+    # 0101430084400005050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505
+    """
     if self.stop_transmit: return
     logger.info("-- process mctp_responder ...")
 
     mctp_data = mctp_spdm.MCTP_SOCKET(self.raw_mctp_res.tobytes())
     logger.info('\n-- To Requester: {}-requester'.format(self.req))
-    mctp_data.show()
+    # mctp_data.show()
     input_data = mctp_data.get_spdm_data()
 
     #if self.res == 'cpld':
@@ -483,7 +505,7 @@ class Run_SPDM_Test(object):
       spdm_msg = spdm.egs_spdm(input_data)
       spdm_msg.decode_message()
 
-      print(mctp_data.spdm_msgcode)
+      print('--mctp_data.spdm_msgcode: ', mctp_data.spdm_msgcode)
       if mctp_data.spdm_msgcode in self.dict_spdm_requester.keys():
         self.dict_spdm_requester[mctp_data.spdm_msgcode].append(mctp_data.data_buffer[1:])
       else:
@@ -495,6 +517,11 @@ class Run_SPDM_Test(object):
       else:
         self.dict_spdm_responder[mctp_data.spdm_msgcode] = []
         self.dict_spdm_responder[mctp_data.spdm_msgcode].append(mctp_data.data_buffer[1:])
+
+    if spdm.dict_Measurements['MeasRecord']['size'] == 0x47:
+      #print('-- spdm.dict_Measurement.MeasRecord.value', spdm.dict_Measurements['MeasRecord']['value'].hex())
+      if spdm.dict_Measurements['MeasRecord']['value'].hex() == LAST_MEASRECORD:
+        self.stop_transmit = True
 
     self.data_res.append(self.raw_mctp_res)  # append raw_mctp_res to for all
     if self.raw_mctp_res.tobytes() == STOP_TRANSMIT:

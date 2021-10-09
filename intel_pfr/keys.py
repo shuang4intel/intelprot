@@ -106,6 +106,9 @@ class PrivateKey(object):
       self.x, self.y = self.vk.to_string().hex()[:64], self.vk.to_string().hex()[64:]
 
     self.X, self.Y = bytes.fromhex(self.x), bytes.fromhex(self.y)
+    if self.pfr_ver == 2:
+      self.X += bytearray(16)
+      self.Y += bytearray(16)
     return (self.X, self.Y)
 
   def get_hashbuffer(self):
@@ -130,6 +133,9 @@ class PrivateKey(object):
       self.hashfunc = hashlib.sha256
     self.x, self.y = x, y
     self.X, self.Y = bytes.fromhex(self.x), bytes.fromhex(self.y)
+    if self.pfr_ver == 2:
+      self.X += bytearray(16)
+      self.Y += bytearray(16)
 
   def verify_pair(self, pubkey):
     """ check if it is a pair of private key with a given public key
@@ -199,6 +205,9 @@ class PublicKey(object):
       self.hashfunc = hashlib.sha256
     self.x, self.y = x, y
     self.X, self.Y = bytes.fromhex(self.x), bytes.fromhex(self.y)
+    if self.pfr_ver == 2:
+      self.X += bytearray(16)
+      self.Y += bytearray(16)
 
   def get_pubkey_xy(self):
     """ get public key X, Y in bytes format """
@@ -208,8 +217,10 @@ class PublicKey(object):
       self.x, self.y = self.vk.to_string().hex()[:64], self.vk.to_string().hex()[64:]
 
     self.X, self.Y = bytes.fromhex(self.x), bytes.fromhex(self.y)
+    if self.pfr_ver == 2:
+      self.X += bytearray(16)
+      self.Y += bytearray(16)
     return (self.X, self.Y)
-
 
   @classmethod
   def from_x_curve(cls, X, curve=NIST384p):
