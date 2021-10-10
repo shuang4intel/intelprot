@@ -12,10 +12,13 @@ firmware resilience.
 About Intel® PFR: https://www.intel.com/pfr
 
 **intel_pfr** is a Python tool package to assist project development.
-It includes scripts to build Intel® PFR compliant firmare and update capsule, design validation etc.
-This Python package is released to assist Intel PFR project in Whitley, Idaville and Eaglestream server plaforms.
+It includes scripts to build Intel® PFR compliant firmare and update capsule, design validation, etc.
+This Python package is released to assist Intel® PFR project in Whitley, Idaville and Eaglestream server plaforms.
 
-This tool package also includes tool scripts that are needed for SPDM based device attestation using open source OPENSPDM
+This tool package also includes scripts that are needed for SPDM based device attestation using open source `OPENSPDM`_.
+
+.. _OPENSPDM: https://github.com/jyao1/openspdm
+
 and SMBus tool on Intel® Eaglestream platform.
 
 Intel® PFR Whitley Max10 FPGA source code is `released in GitHub`_.
