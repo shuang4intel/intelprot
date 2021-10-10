@@ -41,9 +41,13 @@ Modules included in this package:
 * utility
 * verify
 
+sphinx module generated html documentation is included in *docs/html/index.html*.
+
 
 Installing
 ----------
+
+Download the wheel file and install it in your system.
 
 .. code-block:: console
 
@@ -53,6 +57,7 @@ Installing
 Requirements
 ------------
 
+This package requires Python 3.6 or above version.
 Dependencies modules:
 
 #. python-ecsda: pip install ecsda
@@ -85,7 +90,7 @@ git pull request is not allowed for now.
 Documentation
 -------------
 
-The full documentation is available at  ../docs/html/index.html
+The documentation is available at  ../docs/html/index.html
 
 
 
