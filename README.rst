@@ -36,6 +36,10 @@ Modules included in this package:
 * utility
 * verify
 
+About Intel® PFR:
+https://www.intel.com/pfr
+
+
 Installing
 ----------
 
