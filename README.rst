@@ -19,22 +19,22 @@ Intel PFR Max10 FPGA source code is `released in GitHub`_.
 
 .. _released in GitHub: https://github.com/intel/platform-firmware-resiliency>
 
-Modules included in this package::
+Modules included in this package:
 
-    * aardvark 
-	* bmc
-	* capsule
-	* cpld
-	* ifwi
-	* keys
-	* mctp_apdm
-	* pfm
-	* sign
-	* spdm
-	* test_cpld
-	* utility
-	* verify
-    
+    * aardvark
+    * bmc
+    * capsule
+    * cpld
+    * ifwi
+    * keys
+    * mctp_spdm
+    * pfm
+    * sign
+    * spdm
+    * test_cpld
+    * utility
+    * verify
+
 Installing
 ----------
 
@@ -64,7 +64,7 @@ Modules inside package can be included in scripts, run standalone in Python cons
 
 Run in command propmt/terminal::
 
-	>python -m intel_pfr.<module-name> -h
+    >python -m intel_pfr.<module-name> -h
 
 Modules that have command line interface include : bmc, capsule, cpld, ifwi, sign, test_cpld, utility, verify.
 
