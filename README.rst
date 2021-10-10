@@ -16,10 +16,7 @@ It includes scripts to build Intel® PFR compliant firmare and update capsule, d
 This Python package is released to assist Intel® PFR project in Whitley, Idaville and Eaglestream server plaforms.
 
 This tool package also includes scripts that are needed for SPDM based device attestation using open source `OPENSPDM`_.
-
-.. _OPENSPDM: https://github.com/jyao1/openspdm
-
-and SMBus tool on Intel® Eaglestream platform.
+.. _OPENSPDM: https://github.com/jyao1/openspdm and SMBus tool on Intel® Eaglestream platform.
 
 Intel® PFR Whitley Max10 FPGA source code is `released in GitHub`_.
 
