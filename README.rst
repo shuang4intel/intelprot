@@ -1,5 +1,5 @@
-Intel® PFR Tool Python package
-===================================
+Intel® PFR Python package (intel_pfr)
+======================================
 
 .. contents:: :depth: 1
 
@@ -7,7 +7,7 @@ Intel® PFR Tool Python package
 Description
 -----------
 
-intel_pfr is a Python tool package for Intel PFR projects development.
+*intel_pfr* is a Python tool package for Intel PFR projects development.
 It includes scripts for Intel PFR compliant firmare, capsule generation, singing, and PFR image analysis, validation, etc.
 
 Intel® Platform Firmware Resilience (Intel® PFR) is a hardware-based cybersecurity solution for platform
