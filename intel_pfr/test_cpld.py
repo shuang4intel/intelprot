@@ -14,15 +14,15 @@
   Execution in command prompt::
 
     >python -m intel_pfr.test_cpld -get_setup   # get openspdm_execution.json file in work folder
-    >python -m intel_pfr.test_cpld -s <openspdm_execution_json> # test in openspdm requester and responder loopback
-    >python -m intel_pfr.test_cpld -req cpld -s <openspdm_execution_json>  # test CPLD as spdm requester
-    >python -m intel_pfr.test_cpld -res cpld -s <openspdm_execution_json>  # test CPLD as spdm responder
+    >python -m intel_pfr.test_cpld -s <openspdm_execution_json> # test in openspdm requester and openspdm responder
+    >python -m intel_pfr.test_cpld -req cpld -s <openspdm_execution_json>  # test CPLD as spdm requester, openspdm responder
+    >python -m intel_pfr.test_cpld -res cpld -s <openspdm_execution_json>  # test CPLD as spdm responder, openspdm requester
 
 
   About OPENSPDM
   ==============
 
-  OPENSPDM is open source project emulating SPDM devices. Refer 611974 device attestation chapter for preparation.
+  OPENSPDM is open source project emulating SPDM devices.
   Refer OPENSPDM GitHub link  `openspdm <https://github.com/jyao1/openspdm>`_. for detail.
 
 """
@@ -272,7 +272,9 @@ class Run_SPDM_Test(object):
 
 
   def hello_to_responder(self):
-    # finish first handshake...
+    """ send 'Server Hello!\x00' packet to responder
+        to finish first handshake to openspdm responder
+    """
     self.sock_res.sendall(spdm.start_hello())
     logger.info('--- Hello to openspdm responder: {}'.format(spdm.start_hello()) )
     say_hello = True
@@ -289,7 +291,9 @@ class Run_SPDM_Test(object):
 
 
   def hello_to_requester(self):
-    # finish first handshake to openspdm requester ...
+    """ send 'Client Hello!\x00' packet to requester
+        to finish first handshake to openspdm requester
+    """
     say_hello = True
     while say_hello:
       try:
@@ -308,7 +312,7 @@ class Run_SPDM_Test(object):
 
   def requester_to_res(self):
     """ SPDM.requester to SPDM.responder
-     Deliver packet from self.req --> self.res
+     Deliver packet from requester to responder
     """
     if (self.req, self.res) == ('openspdm', 'openspdm'):
       # openspdm --> openspdm
@@ -339,7 +343,6 @@ class Run_SPDM_Test(object):
       self.sock_res.sendall(datachunk_q)
       self.raw_mctp_req.extend(datachunk_q)  # track single mctp message
       self.data_req.append(self.raw_mctp_req)  # append to data_req for all message
-
 
     if (self.req, self.res) == ('openspdm', 'cpld'):
       # openspdm --> cpld
@@ -454,7 +457,8 @@ class Run_SPDM_Test(object):
 
 
   def process_mctp_requester(self):
-    # process requester MCTP packet
+    """ process requester MCTP packet
+    """
     logger.info("-- process mctp_requester ...")
     print(self.raw_mctp_req.tobytes())
     if self.stop_transmit: return
@@ -487,8 +491,6 @@ class Run_SPDM_Test(object):
 
   def process_mctp_responder(self):
     """ process responder MCTP packet
-
-    # 0101430084400005050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505
     """
     if self.stop_transmit: return
     logger.info("-- process mctp_responder ...")
