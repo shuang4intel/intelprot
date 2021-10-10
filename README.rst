@@ -1,4 +1,4 @@
-Pure-Python Intel® PFR Tool package
+Intel® PFR Tool Python package
 ===================================
 
 .. contents:: :depth: 1
@@ -7,23 +7,40 @@ Pure-Python Intel® PFR Tool package
 Description
 -----------
 
-intel_pfr is a Pure Python tool package for Intel PFR projects development.
+intel_pfr is a Python tool package for Intel PFR projects development.
 It includes scripts for Intel PFR compliant firmare, capsule generation, singing, and PFR image analysis, validation, etc.
 
 Intel® Platform Firmware Resilience (Intel® PFR) is a hardware-based cybersecurity solution for platform
 firmware resilience. This Python package is released to assist Intel PFR project in Whitley, Idaville and Eaglestream plaforms.
 
+This tool package also includes tool scripts that are needed for SPDM based device attestation using open source OPENSPDM.
+
 Intel PFR Max10 FPGA source code is `released in GitHub`_.
 
 .. _released in GitHub: https://github.com/intel/platform-firmware-resiliency>
 
+Modules included in this package::
 
+    * aardvark 
+	* bmc
+	* capsule
+	* cpld
+	* ifwi
+	* keys
+	* mctp_apdm
+	* pfm
+	* sign
+	* spdm
+	* test_cpld
+	* utility
+	* verify
+    
 Installing
 ----------
 
 .. code-block:: console
 
-    pip install intel_pfr-2.0-py3-none-any.whl
+    pip install intel_pfr-x.x.x-py3-none-any.whl
 
 
 Requirements
@@ -55,7 +72,7 @@ Modules that have command line interface include : bmc, capsule, cpld, ifwi, sig
 Documentation
 -------------
 
-The full documentation is available at  ../docs/build/html/index.html
+The full documentation is available at  ../docs/html/index.html
 
 
 
