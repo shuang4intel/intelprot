@@ -7,22 +7,24 @@ Intel® PFR Python package (intel_pfr)
 Description
 -----------
 
-**intel_pfr** is a Python tool package for Intel PFR projects development.
-It includes scripts for Intel PFR compliant firmare, capsule generation, singing, and PFR image analysis, validation, etc.
-
 Intel® Platform Firmware Resilience (Intel® PFR) is a hardware-based cybersecurity solution for platform
-firmware resilience. This Python package is released to assist Intel PFR project in Whitley, Idaville and Eagle stream plaforms.
+firmware resilience. 
+About Intel® PFR: https://www.intel.com/pfr
+
+**intel_pfr** is a Python tool package to assist project development.
+It includes scripts to build Intel® PFR compliant firmare and update capsule, design validation etc.
+This Python package is released to assist Intel PFR project in Whitley, Idaville and Eaglestream server plaforms.
 
 This tool package also includes tool scripts that are needed for SPDM based device attestation using open source OPENSPDM
 and SMBus tool on Intel® Eaglestream platform.
 
-Intel PFR Max10 FPGA source code is `released in GitHub`_.
+Intel® PFR Whitley Max10 FPGA source code is `released in GitHub`_.
 
 .. _released in GitHub: https://github.com/intel/platform-firmware-resiliency>
 
 Modules included in this package:
 
-* aardvark
+* aardvark (driver and api)
 * bmc
 * capsule
 * cpld
@@ -35,9 +37,6 @@ Modules included in this package:
 * test_cpld
 * utility
 * verify
-
-About Intel® PFR:
-https://www.intel.com/pfr
 
 
 Installing
