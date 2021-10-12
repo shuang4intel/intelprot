@@ -60,10 +60,13 @@ Requirements
 This package requires Python 3.6 or above version.
 Dependencies modules:
 
-#. python-ecsda: pip install ecsda
+#. python-ecdsa: pip install ecsda
 #. crccheck: pip install crccheck
 #. python-tabulate: pip install tabulate
 #. ipmitool 
+
+Note that private keys of reference design are not included. 
+You would need add "keys" folder or generate new keys.
 
 
 Usage
