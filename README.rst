@@ -1,4 +1,4 @@
-Intel® PFR Python package (intel_pfr)
+Intel® PRoT Python package (intelprot)
 ======================================
 
 .. contents:: :depth: 1
@@ -11,14 +11,16 @@ Intel® Platform Firmware Resilience (Intel® PFR) is a hardware-based cybersecu
 firmware resilience. 
 About Intel® PFR: https://www.intel.com/pfr
 
-**intel_pfr** is a Python tool package to assist project development.
+**intelprot** is a Python tool package to assist project development.
 It includes scripts to build Intel® PFR compliant firmare and update capsule, design validation, etc.
 This Python package is released to assist Intel® PFR project in Whitley, Idaville and Eaglestream server plaforms.
+It is also planned for BirchStream platform PRoT design validation for both Intel PFR based PRoT and non-Intel PFR 
+PRoT design validation.
 
 This tool package also includes scripts that are needed for SPDM based device attestation using 
-SMBus tool on Intel® Eaglestream platform with open source project `OPENSPDM`_.
+SMBus tool on Intel® Eaglestream platform with open source project `spdm-emu`_.
 
-.. _OPENSPDM: https://github.com/jyao1/openspdm 
+.. _spdm-emu: https://github.com/DMTF/spdm-emu 
 
 
 Intel® PFR Whitley Max10 FPGA source code is `released in GitHub`_.
@@ -37,7 +39,7 @@ Modules included in this package:
 * pfm
 * sign
 * spdm
-* test_cpld
+* testprot
 * utility
 * verify
 
@@ -51,7 +53,7 @@ Download the wheel file and install it in your system.
 
 .. code-block:: console
 
-    pip install intel_pfr-x.x.x-py3-none-any.whl
+    pip install intelprot-x.x.x-py3-none-any.whl
 
 
 Requirements
@@ -76,13 +78,13 @@ Modules inside package can be included in scripts, run standalone in Python cons
 
 .. code-block:: python
 
-    >>>from intel_pfr import <module-name>
+    >>>from intelprot import <module-name>
 
 Run in command propmt/terminal::
 
-    >python -m intel_pfr.<module-name> -h
+    >python -m intelprot.<module-name> -h
 
-Modules that have command line interface include : **bmc, capsule, cpld, ifwi, sign, test_cpld, utility, verify**.
+Modules that have command line interface include : **bmc, capsule, cpld, ifwi, sign, testprot, utility, verify**.
 
 Please report issue or send email to admin if you observe any issue or have new request that you want to assist your Intel PFR project.
 Author will update the related modules quickly.
@@ -100,7 +102,7 @@ The documentation is available at  ../docs/html/index.html
 Copyright and License
 ---------------------
 
-Copyright (c) 2021 Intel Corporation
+Copyright (c) 2022 Intel Corporation
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
