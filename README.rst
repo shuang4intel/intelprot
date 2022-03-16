@@ -8,10 +8,12 @@ Description
 -----------
 
 Intel® Platform Firmware Resilience (Intel® PFR) is a hardware-based cybersecurity solution for platform
-firmware resilience. 
-About Intel® PFR: https://www.intel.com/pfr
+firmware resilience. About Intel® PFR: https://www.intel.com/pfr
 
 **intelprot** is a Python tool package to assist project development.
+Intel Platform Root of Trust (PRoT) package is used for Intel PRoT design assistance and validation for 
+both Intel PFR based PRoT and non-Intel PFR based PRoT designs.
+
 It includes scripts to build Intel® PFR compliant firmare and update capsule, design validation, etc.
 This Python package is released to assist Intel® PFR project in Whitley, Idaville and Eaglestream server plaforms.
 It is also planned for BirchStream platform PRoT design validation for both Intel PFR based PRoT and non-Intel PFR 
