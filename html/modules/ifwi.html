@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ifwi &mdash; intelprot  documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="sign" href="sign.html" />
+    <link rel="prev" title="cpld" href="cpld.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> intelprot
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="bmc.html">bmc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cpld.html">cpld</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">ifwi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sign.html">sign</a></li>
+<li class="toctree-l1"><a class="reference internal" href="capsule.html">capsule</a></li>
+<li class="toctree-l1"><a class="reference internal" href="keys.html">keys</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pfm.html">pfm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utility.html">utility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="verify.html">verify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="spdm.html">spdm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mctp_spdm.html">mctp_spdm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="aardvark/smb_avark.html">aardvark.smb_avark</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testprot.html">testprot</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">intelprot</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>ifwi</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/modules/ifwi.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-ifwi">
+<span id="ifwi"></span><h1>ifwi<a class="headerlink" href="#module-ifwi" title="Permalink to this headline"></a></h1>
+<p>This module is to analysis and customize IFWI image:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">*</span> <span class="n">add</span> <span class="n">cpld</span> <span class="n">update</span> <span class="n">capsule</span> <span class="n">to</span> <span class="n">IFWI</span> <span class="n">staging</span> <span class="n">area</span>
+<span class="o">*</span> <span class="n">extract</span> <span class="n">PFR</span> <span class="n">provision</span> <span class="n">data</span> <span class="kn">from</span> <span class="nn">bios</span> <span class="n">region</span>
+<span class="o">*</span> <span class="n">update</span> <span class="n">BMC</span> <span class="n">PFM</span> <span class="n">active</span> <span class="n">offset</span>
+</pre></div>
+</div>
+<p>command line execution:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span><span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">intelprot</span><span class="o">.</span><span class="n">ifwi</span> <span class="o">-</span><span class="n">i</span> <span class="o">&lt;</span><span class="n">pfr_ifwi_image</span><span class="o">&gt;</span>
+<span class="o">&gt;</span><span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">intelprot</span><span class="o">.</span><span class="n">ifwi</span> <span class="o">-</span><span class="n">i</span> <span class="o">&lt;</span><span class="n">pfr_ifwi_image</span><span class="o">&gt;</span> <span class="o">-</span><span class="n">show_prov</span>
+
+<span class="c1"># update BMC active pfm offset</span>
+<span class="o">&gt;</span><span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">intelprot</span><span class="o">.</span><span class="n">ifwi</span> <span class="o">-</span><span class="n">i</span> <span class="o">&lt;</span><span class="n">pfr_ifwi_image</span><span class="o">&gt;</span> <span class="o">-</span><span class="n">bmc_pfm</span> <span class="o">&lt;</span><span class="n">bmc_active_offset</span><span class="o">&gt;</span>
+
+<span class="c1"># example: from BMC offset from 0x80000 to 0x1FC00000, a new ifwi image will be generated.</span>
+<span class="o">&gt;</span><span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">intelprot</span><span class="o">.</span><span class="n">ifwi</span> <span class="o">-</span><span class="n">i</span> <span class="o">&lt;</span><span class="n">pfr_ifwi_image</span><span class="o">&gt;</span> <span class="o">-</span><span class="n">bmc_pfm</span> <span class="mh">0x1fc0000</span>
+</pre></div>
+</div>
+<p class="rubric">Functions</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ifwi.main" title="ifwi.main"><code class="xref py py-obj docutils literal notranslate"><span class="pre">main</span></code></a>(args)</p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Classes</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ifwi.Agent" title="ifwi.Agent"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Agent</span></code></a>(input_img)</p></td>
+<td><p>extract PFR provision UFM data from PFR BIOS binary image</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ifwi.IFWI" title="ifwi.IFWI"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IFWI</span></code></a>(ifwi_image)</p></td>
+<td><p>class for IFWI image operation</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py class">
+<dt class="sig sig-object py" id="ifwi.Agent">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ifwi.</span></span><span class="sig-name descname"><span class="pre">Agent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_img</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ifwi.Agent" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>extract PFR provision UFM data from PFR BIOS binary image</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="ifwi.Agent.get_keym_value">
+<span class="sig-name descname"><span class="pre">get_keym_value</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ifwi.Agent.get_keym_value" title="Permalink to this definition"></a></dt>
+<dd><p>extract root public key hash from __KEYM__ structure</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ifwi.Agent.get_pfrs_value">
+<span class="sig-name descname"><span class="pre">get_pfrs_value</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ifwi.Agent.get_pfrs_value" title="Permalink to this definition"></a></dt>
+<dd><p>get provision data</p>
+<p>extract pfr offset provision UFM data from __PFRS__ structure</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ifwi.Agent.get_prov_data">
+<span class="sig-name descname"><span class="pre">get_prov_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ifwi.Agent.get_prov_data" title="Permalink to this definition"></a></dt>
+<dd><p>get provision data</p>
+<p>extract root public key hash from __KEYM__ structure
+extract pfr offset provision UFM data from __PFRS__ structure</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ifwi.Agent.show">
+<span class="sig-name descname"><span class="pre">show</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ifwi.Agent.show" title="Permalink to this definition"></a></dt>
+<dd><p>log structure data</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ifwi.IFWI">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ifwi.</span></span><span class="sig-name descname"><span class="pre">IFWI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ifwi_image</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ifwi.IFWI" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>class for IFWI image operation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>ifwi_image</strong> – pfr ifwi image</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="ifwi.IFWI.add_capsule">
+<span class="sig-name descname"><span class="pre">add_capsule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_addr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">capsule_image</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ifwi.IFWI.add_capsule" title="Permalink to this definition"></a></dt>
+<dd><p>add capsule image to ifwi image</p>
+<p>This function can be used to include staging capsule to pfr ifwi image.
+or adding cpld signed update capsule to PCH/CPU SPI image</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>start_addr</strong> – start address of signed capsule</p></li>
+<li><p><strong>capsule_image</strong> – capsule image file to be added</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ifwi.IFWI.get_rcv_capsule">
+<span class="sig-name descname"><span class="pre">get_rcv_capsule</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ifwi.IFWI.get_rcv_capsule" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ifwi.IFWI.show">
+<span class="sig-name descname"><span class="pre">show</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ifwi.IFWI.show" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ifwi.IFWI.update_bmc_active">
+<span class="sig-name descname"><span class="pre">update_bmc_active</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bmc_active_offset</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ifwi.IFWI.update_bmc_active" title="Permalink to this definition"></a></dt>
+<dd><p>update BMC active PFM offset</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>bmc_active_offset</strong> – BMC active PFM offset</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ifwi.main">
+<span class="sig-prename descclassname"><span class="pre">ifwi.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ifwi.main" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="cpld.html" class="btn btn-neutral float-left" title="cpld" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="sign.html" class="btn btn-neutral float-right" title="sign" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, scott huang.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
